@@ -1,0 +1,101 @@
+{
+    "testMIB": {
+        "name": "testMIB",
+        "oid": "1.3.6.1.4.1.99999",
+        "class": "moduleidentity",
+        "revisions": [
+            "2026-01-01 00:00"
+        ],
+        "lastupdated": "202601010000Z",
+        "organization": "Integ",
+        "contactinfo": "support@integ.co.za",
+        "description": "A small test MIB."
+    },
+    "testScalar": {
+        "name": "testScalar",
+        "oid": "1.3.6.1.4.1.99999.1",
+        "class": "objecttype",
+        "syntax": {
+            "type": "Integer32"
+        },
+        "maxaccess": "read-only",
+        "status": "current",
+        "description": "A scalar.",
+        "nodetype": "scalar"
+    },
+    "testTable": {
+        "name": "testTable",
+        "oid": "1.3.6.1.4.1.99999.2",
+        "class": "objecttype",
+        "syntax": {
+            "type": "TestEntry"
+        },
+        "maxaccess": "not-accessible",
+        "status": "current",
+        "description": "A table.",
+        "nodetype": "table"
+    },
+    "testEntry": {
+        "name": "testEntry",
+        "oid": "1.3.6.1.4.1.99999.2.1",
+        "class": "objecttype",
+        "syntax": {
+            "type": "TestEntry"
+        },
+        "maxaccess": "not-accessible",
+        "status": "current",
+        "description": "A row.",
+        "indices": [
+            {
+                "object": "testIndex",
+                "implied": false
+            }
+        ],
+        "nodetype": "row"
+    },
+    "testIndex": {
+        "name": "testIndex",
+        "oid": "1.3.6.1.4.1.99999.2.1.1",
+        "class": "objecttype",
+        "syntax": {
+            "type": "Integer32"
+        },
+        "maxaccess": "not-accessible",
+        "status": "current",
+        "description": "Row index.",
+        "nodetype": "column"
+    },
+    "testValue": {
+        "name": "testValue",
+        "oid": "1.3.6.1.4.1.99999.2.1.2",
+        "class": "objecttype",
+        "syntax": {
+            "type": "OCTET STRING",
+            "constraints": {
+                "size": [
+                    {
+                        "min": 0,
+                        "max": 255
+                    }
+                ]
+            }
+        },
+        "maxaccess": "read-write",
+        "status": "current",
+        "description": "Row value.",
+        "nodetype": "column"
+    },
+    "testTrap": {
+        "name": "testTrap",
+        "oid": "1.3.6.1.4.1.99999.3",
+        "class": "notificationtype",
+        "objects": [
+            {
+                "module": "TEST-MIB",
+                "object": "testScalar"
+            }
+        ],
+        "status": "current",
+        "description": "Something happened."
+    }
+}

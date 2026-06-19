@@ -6,79 +6,25 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 
 class MibParserTest {
 
-    private static final String SIMPLE_MIB = """
-            TEST-MIB DEFINITIONS ::= BEGIN
+    // Single source of truth for the example MIB shipped in examples/sample.mib
+    // and examples/sample.json (referenced from the README) - loading it here
+    // instead of duplicating the text means those two files can't silently
+    // drift out of sync with what the parser actually produces.
+    private static final Path EXAMPLES_DIR = Path.of("examples");
 
-            IMPORTS
-                MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises
-                    FROM SNMPv2-SMI;
-
-            testMIB MODULE-IDENTITY
-                LAST-UPDATED "202601010000Z"
-                ORGANIZATION "Integ"
-                CONTACT-INFO "support@integ.co.za"
-                DESCRIPTION "A small test MIB."
-                REVISION "202601010000Z"
-                DESCRIPTION "Initial revision."
-                ::= { enterprises 99999 }
-
-            testScalar OBJECT-TYPE
-                SYNTAX Integer32
-                MAX-ACCESS read-only
-                STATUS current
-                DESCRIPTION "A scalar."
-                ::= { testMIB 1 }
-
-            TestEntry ::= SEQUENCE {
-                testIndex Integer32,
-                testValue OCTET STRING
-            }
-
-            testTable OBJECT-TYPE
-                SYNTAX SEQUENCE OF TestEntry
-                MAX-ACCESS not-accessible
-                STATUS current
-                DESCRIPTION "A table."
-                ::= { testMIB 2 }
-
-            testEntry OBJECT-TYPE
-                SYNTAX TestEntry
-                MAX-ACCESS not-accessible
-                STATUS current
-                DESCRIPTION "A row."
-                INDEX { testIndex }
-                ::= { testTable 1 }
-
-            testIndex OBJECT-TYPE
-                SYNTAX Integer32
-                MAX-ACCESS not-accessible
-                STATUS current
-                DESCRIPTION "Row index."
-                ::= { testEntry 1 }
-
-            testValue OBJECT-TYPE
-                SYNTAX OCTET STRING (SIZE (0..255))
-                MAX-ACCESS read-write
-                STATUS current
-                DESCRIPTION "Row value."
-                ::= { testEntry 2 }
-
-            testTrap NOTIFICATION-TYPE
-                OBJECTS { testScalar }
-                STATUS current
-                DESCRIPTION "Something happened."
-                ::= { testMIB 3 }
-
-            END
-            """;
+    private static String sampleMib() throws Exception {
+        return Files.readString(EXAMPLES_DIR.resolve("sample.mib"));
+    }
 
     @Test
     void parsesScalarTableAndNotification() throws Exception {
-        String json = MibParser.toJson(SIMPLE_MIB);
+        String json = MibParser.toJson(sampleMib());
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(json);
 
@@ -114,7 +60,15 @@ class MibParserTest {
 
     @Test
     void multiModuleMapApi() throws Exception {
-        var result = MibParser.toJson(java.util.Map.of("TEST-MIB", SIMPLE_MIB));
+        var result = MibParser.toJson(java.util.Map.of("TEST-MIB", sampleMib()));
         assertTrue(result.get("TEST-MIB").contains("\"testMIB\""));
+    }
+
+    @Test
+    void checkedInExampleJsonMatchesParserOutput() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode actual = mapper.readTree(MibParser.toJson(sampleMib()));
+        JsonNode expected = mapper.readTree(Files.readString(EXAMPLES_DIR.resolve("sample.json")));
+        assertEquals(expected, actual, "examples/sample.json is stale - regenerate it from examples/sample.mib");
     }
 }

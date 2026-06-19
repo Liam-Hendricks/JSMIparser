@@ -1,0 +1,63 @@
+TEST-MIB DEFINITIONS ::= BEGIN
+
+IMPORTS
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises
+        FROM SNMPv2-SMI;
+
+testMIB MODULE-IDENTITY
+    LAST-UPDATED "202601010000Z"
+    ORGANIZATION "Integ"
+    CONTACT-INFO "support@integ.co.za"
+    DESCRIPTION "A small test MIB."
+    REVISION "202601010000Z"
+    DESCRIPTION "Initial revision."
+    ::= { enterprises 99999 }
+
+testScalar OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION "A scalar."
+    ::= { testMIB 1 }
+
+TestEntry ::= SEQUENCE {
+    testIndex Integer32,
+    testValue OCTET STRING
+}
+
+testTable OBJECT-TYPE
+    SYNTAX SEQUENCE OF TestEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "A table."
+    ::= { testMIB 2 }
+
+testEntry OBJECT-TYPE
+    SYNTAX TestEntry
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "A row."
+    INDEX { testIndex }
+    ::= { testTable 1 }
+
+testIndex OBJECT-TYPE
+    SYNTAX Integer32
+    MAX-ACCESS not-accessible
+    STATUS current
+    DESCRIPTION "Row index."
+    ::= { testEntry 1 }
+
+testValue OBJECT-TYPE
+    SYNTAX OCTET STRING (SIZE (0..255))
+    MAX-ACCESS read-write
+    STATUS current
+    DESCRIPTION "Row value."
+    ::= { testEntry 2 }
+
+testTrap NOTIFICATION-TYPE
+    OBJECTS { testScalar }
+    STATUS current
+    DESCRIPTION "Something happened."
+    ::= { testMIB 3 }
+
+END

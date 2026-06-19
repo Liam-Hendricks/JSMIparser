@@ -32,8 +32,26 @@ import za.co.integ.jsmiparser.MibParser;
 String json = MibParser.toJson(mibText);
 ```
 
-See `MibParser` for the multi-module (`toJson(Map<String,String>)`) and
-`buildIndex` entry points used when MIBs need cross-module OID resolution.
+See `MibParser` for the multi-module entry point
+(`toJson(Map<String,String>)`) used when compiling several MIBs at once.
+Note: it does not yet share OID resolution across modules — see the "Known
+gaps" note in `SPEC.md` §8.
+
+## Example
+
+[`examples/sample.mib`](examples/sample.mib) is a small synthetic MIB
+exercising a scalar, a table (row/column nodetype inference), and a
+notification. [`examples/sample.json`](examples/sample.json) is its exact
+`MibParser.toJson` output, checked against the live parser by
+`MibParserTest.checkedInExampleJsonMatchesParserOutput` on every test run —
+if you change the JSON schema, that test will fail until you regenerate it.
+
+To try it yourself:
+
+```java
+String mibText = Files.readString(Path.of("examples/sample.mib"));
+System.out.println(MibParser.toJson(mibText));
+```
 
 ## License
 
