@@ -18,6 +18,17 @@ repositories {
     mavenCentral()
 }
 
+// Dedicated configuration for the fat jar's actual runtime needs. The
+// 'antlr' configuration above pulls in the full org.antlr:antlr4 code
+// generator (used only by generateGrammarSource), which drags in ICU4J,
+// StringTemplate, and the ANTLR3 runtime as transitive deps - none of
+// which the generated lexer/parser need at runtime. Gradle's antlr plugin
+// wires that whole tool onto the api/runtime classpath by default, so
+// without this separate configuration the fat jar balloons to ~19MB.
+configurations {
+    fatJarRuntime
+}
+
 dependencies {
     antlr 'org.antlr:antlr4:4.13.2'
     api 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
@@ -25,6 +36,9 @@ dependencies {
     testImplementation platform('org.junit:junit-bom:5.11.0')
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    fatJarRuntime 'org.antlr:antlr4-runtime:4.13.2'
+    fatJarRuntime 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
 }
 
 sourceSets.main.antlr.srcDirs = ['src/main/antlr4']
@@ -67,7 +81,7 @@ tasks.register('fatJar', Jar) {
     }
     from sourceSets.main.output
     from {
-        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.fatJarRuntime.collect { it.isDirectory() ? it : zipTree(it) }
     }
     with jar
 }
