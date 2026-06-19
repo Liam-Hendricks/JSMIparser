@@ -1,0 +1,15 @@
+jSMIparser
+Copyright (c) 2026, jSMIparser contributors
+
+This project is an independent Java reimplementation that targets output
+compatibility with pysmi's ASN.1 MIB -> JSON pipeline (the JsonCodeGen
+output schema and several documented behavioural quirks). No pysmi source
+code is included or redistributed; the grammar and Java implementation
+here are original.
+
+pysmi is the reference/inspiration project and is licensed separately
+under the BSD 2-Clause License:
+
+  Copyright (c) 2015-2020, Ilya Etingof
+  Copyright (c) 2022, LeXtudio Inc.
+  https://github.com/lextudio/pysmi
