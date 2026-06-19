@@ -1,0 +1,14 @@
+.gradle/
+build/
+out/
+.idea/
+*.iml
+.vscode/
+.classpath
+.project
+.settings/
+*.log
+
+# Third-party vendor MIB files used for local real-world testing - unclear
+# redistribution rights, kept out of version control.
+test files/

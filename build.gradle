@@ -1,0 +1,81 @@
+plugins {
+    id 'java-library'
+    id 'antlr'
+    id 'maven-publish'
+}
+
+group = 'za.co.integ.jsmiparser'
+version = '0.1.0-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    antlr 'org.antlr:antlr4:4.13.2'
+    api 'com.fasterxml.jackson.core:jackson-databind:2.17.2'
+
+    testImplementation platform('org.junit:junit-bom:5.11.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+sourceSets.main.antlr.srcDirs = ['src/main/antlr4']
+
+generateGrammarSource {
+    arguments += ['-visitor', '-package', 'za.co.integ.jsmiparser.internal.gen']
+    outputDirectory = file("build/generated-src/antlr/main/za/co/integ/jsmiparser/internal/gen")
+}
+
+// ANTLR's own generated sources reference the antlr4-runtime, which the
+// 'antlr' configuration already pulls in transitively for compilation.
+sourceSets.main.java.srcDirs += 'build/generated-src/antlr/main'
+
+tasks.named('compileJava') {
+    dependsOn generateGrammarSource
+}
+
+tasks.named('sourcesJar') {
+    dependsOn generateGrammarSource
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+test {
+    useJUnitPlatform()
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Implementation-Title': 'jSMIparser', 'Implementation-Version': project.version
+    }
+}
+
+// Fat jar for drop-in use (e.g. as an Ignition module dependency).
+tasks.register('fatJar', Jar) {
+    archiveClassifier = 'all'
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes 'Implementation-Title': 'jSMIparser', 'Implementation-Version': project.version
+    }
+    from sourceSets.main.output
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
+}
