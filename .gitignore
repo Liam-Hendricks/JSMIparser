@@ -12,3 +12,6 @@ out/
 # Third-party vendor MIB files used for local real-world testing - unclear
 # redistribution rights, kept out of version control.
 test files/
+
+# Session handoff notes - local working context, not for version control.
+CLAUDE.md

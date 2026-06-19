@@ -23,6 +23,16 @@ import za.co.integ.jsmiparser.internal.gen.SMIParser.ModuleDefinitionContext;
  */
 public final class MibParser {
 
+    /**
+     * Real-world MIBs are KB-to-low-MB scale; this caps adversarial input
+     * (e.g. an upload pipeline feeding this parser untrusted text) so a
+     * single call can't drive unbounded memory/CPU use.
+     */
+    private static final int MAX_INPUT_LENGTH = 10_000_000;
+
+    /** Stops collecting syntax errors once malformed/garbage input would otherwise grow the list unboundedly. */
+    private static final int MAX_ERRORS = 1000;
+
     private MibParser() {
     }
 
@@ -56,6 +66,10 @@ public final class MibParser {
     }
 
     private static ObjectNode parseToNode(String mibText) throws MibParseException {
+        if (mibText.length() > MAX_INPUT_LENGTH) {
+            throw new MibParseException("input exceeds maximum size of " + MAX_INPUT_LENGTH + " characters");
+        }
+
         List<String> errors = new ArrayList<>();
 
         SMILexer lexer = new SMILexer(CharStreams.fromString(mibText));
@@ -66,7 +80,12 @@ public final class MibParser {
         parser.removeErrorListeners();
         parser.addErrorListener(collectingListener(errors));
 
-        SMIParser.MibFileContext mibFile = parser.mibFile();
+        SMIParser.MibFileContext mibFile;
+        try {
+            mibFile = parser.mibFile();
+        } catch (TooManyErrorsException e) {
+            mibFile = null;
+        }
         if (!errors.isEmpty()) {
             throw new MibParseException(String.join("; ", errors));
         }
@@ -87,9 +106,16 @@ public final class MibParser {
             @Override
             public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line,
                     int charPositionInLine, String msg, RecognitionException e) {
+                if (errors.size() >= MAX_ERRORS) {
+                    throw new TooManyErrorsException();
+                }
                 errors.add("line " + line + ":" + charPositionInLine + " " + msg);
             }
         };
+    }
+
+    /** Unchecked: thrown from inside ANTLR's error-listener callback to abort parsing early. */
+    private static final class TooManyErrorsException extends RuntimeException {
     }
 
     private static final class JsonNodeFactoryHolder {
